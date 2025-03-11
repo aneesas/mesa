@@ -41,7 +41,7 @@ These install instructions were tested on Ubuntu 20.04 as of April, 2024.
 * We will assume that `mesa_workspace` is the name of your working directory for the rest of these instructions
 * [Optional for scripts] Next construct a python environment for this workspace. We recommend using conda.
     * Activate the environment
-    * Install `numpy matplotlib scipy setuptools`
+    * Install `numpy matplotlib scipy setuptools seaborn`
     * Note: This is needed only to run the python scripts in `scripts/`
 
 ### 2. Dependency 1 - GTSAM
@@ -70,7 +70,7 @@ These install instructions were tested on Ubuntu 20.04 as of April, 2024.
     * `cmake .. -DGTSAM_DIR=/path/to/mesa_workspace/gtsam/build -DGTSAM_INCLUDE_DIR=/path/to/mesa_workspace/gtsam/gtsam`
     * `make`
 * [Optional for scripts] Install JRL python into the project's python environment
-    * `make python-install`
+    * `make jrl-python-install`
 
 ### 4. MESA
 * In the workspace directory clone MESA
@@ -102,10 +102,10 @@ First we need to generate an example dataset. From the `mesa_workspace` director
 * `./mesa/build/experiments/run-dist-batch -i example_dataset_0000.jrl -m geodesic-mesa -o . --is3d`
 
 ### 3. Plot the results
-* `./scripts/plot-results -d example_dataset_0000.jrl -r example_dataset_0000_geodesic-mesa_<DATE>/final_results.jrr.cbor --is3d `
+* `./mesa/scripts/plot-results -d example_dataset_0000.jrl -r example_dataset_0000_geodesic-mesa_<DATE>/final_results.jrr.cbor --is3d `
 
 ### 4. Visualize Convergence Curve
-* `./scripts/compare-convergence -d example_dataset_0000.jrl  -c example_dataset_0000_centralized_<DATE>/ -m example_dataset_0000_geodesic-mesa_<DATE>/ -rs 1 -ts 1`
+* `./mesa/scripts/compare-convergence -d example_dataset_0000.jrl  -c example_dataset_0000_centralized_<DATE>/ -m example_dataset_0000_geodesic-mesa_<DATE>/ -rs 1 -ts 1`
 
 
 ## Issues
