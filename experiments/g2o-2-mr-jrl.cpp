@@ -23,7 +23,8 @@ po::variables_map handle_args(int argc, const char* argv[]) {
       ("input_g2o,i",         po::value<std::string>()->required(),   "(Required) The input g2o file.")
       ("name,n",              po::value<std::string>()->required(),   "(Required) The name of the dataset")
       ("output_jrl,o",        po::value<std::string>()->required(),   "(Required) The output jrl file.")
-      ("num_partitions,p",    po::value<int>()->required(),           "(Required) The number of partitions to make.");
+      ("num_partitions,p",    po::value<int>()->required(),           "(Required) The number of partitions to make.")
+      ("x_init_file,x",       po::value<std::string>(),               "(Optional) Path to text file with initial state.");
   // clang-format on
 
   // Parse and return the options
@@ -53,6 +54,10 @@ int main(int argc, const char* argv[]) {
   gtsam::GraphAndValues readGraph = gtsam::readG2o(args["input_g2o"].as<std::string>(), true);
   gtsam::NonlinearFactorGraph graph = *(readGraph.first);
   gtsam::Values initial = *(readGraph.second);
+  // Optionally updates Values from file containing initial state
+  if args.count("x_init_file") {
+    // Load values from text file
+  }
 
   // Partition the given graph into subgraphs using metis
   // Returns map from variable key -> subgraph index
@@ -100,6 +105,7 @@ int main(int argc, const char* argv[]) {
   gtsam::Values rekeyed_pseudo_gt = optimizer.optimize();
 
   // For each robot (except the first) add a prior
+  // NOTE(aneesa): this isn't doing anything! Only prior is on the first robot/origin
   for (int i = 1; i < num_partitions; i++) {
     size_t rid_first_var_idx = robot_variables[ROBOT_ID_OPTIONS[i]].front();
     gtsam::Key rid_first_var_key = variable_remapping[rid_first_var_idx];
