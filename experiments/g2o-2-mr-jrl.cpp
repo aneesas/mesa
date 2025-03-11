@@ -23,8 +23,7 @@ po::variables_map handle_args(int argc, const char* argv[]) {
       ("input_g2o,i",         po::value<std::string>()->required(),   "(Required) The input g2o file.")
       ("name,n",              po::value<std::string>()->required(),   "(Required) The name of the dataset")
       ("output_jrl,o",        po::value<std::string>()->required(),   "(Required) The output jrl file.")
-      ("num_partitions,p",    po::value<int>()->required(),           "(Required) The number of partitions to make.")
-      ("x_init_file,x",       po::value<std::string>(),               "(Optional) Path to text file with initial state.");
+      ("num_partitions,p",    po::value<int>()->required(),           "(Required) The number of partitions to make.");
   // clang-format on
 
   // Parse and return the options
@@ -54,10 +53,6 @@ int main(int argc, const char* argv[]) {
   gtsam::GraphAndValues readGraph = gtsam::readG2o(args["input_g2o"].as<std::string>(), true);
   gtsam::NonlinearFactorGraph graph = *(readGraph.first);
   gtsam::Values initial = *(readGraph.second);
-  // Optionally updates Values from file containing initial state
-  if args.count("x_init_file") {
-    // Load values from text file
-  }
 
   // Partition the given graph into subgraphs using metis
   // Returns map from variable key -> subgraph index
