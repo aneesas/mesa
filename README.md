@@ -80,6 +80,7 @@ These install instructions were tested on Ubuntu 20.04 as of April, 2024.
     * `cd mesa`
     * `mkdir build && cd build`
     * `cmake .. -Djrl_DIR=/path/to/jrl/build -Djrl_INCLUDE_DIR=/path/to/jrl/include -DGTSAM_DIR=/path/to/gtsam/build -DGTSAM_INCLUDE_DIR=/path/to/gtsam/gtsam`
+    * `make`
 
 
 ## Dataset Info
