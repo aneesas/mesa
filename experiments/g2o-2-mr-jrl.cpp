@@ -2,6 +2,7 @@
 #include <ADMM.h>
 #include <ADMMUtils.h>
 #include <gtsam/geometry/Pose3.h>
+#include <gtsam/geometry/Pose2.h>
 #include <gtsam/slam/dataset.h>
 #include <jrl/DatasetBuilder.h>
 #include <jrl/IOMeasurements.h>
@@ -23,7 +24,8 @@ po::variables_map handle_args(int argc, const char* argv[]) {
       ("input_g2o,i",         po::value<std::string>()->required(),   "(Required) The input g2o file.")
       ("name,n",              po::value<std::string>()->required(),   "(Required) The name of the dataset")
       ("output_jrl,o",        po::value<std::string>()->required(),   "(Required) The output jrl file.")
-      ("num_partitions,p",    po::value<int>()->required(),           "(Required) The number of partitions to make.");
+      ("num_partitions,p",    po::value<int>()->required(),           "(Required) The number of partitions to make.")
+      ("is3d",                po::bool_switch()->default_value(false),"(Optional) Flag specifying if the g2o file is 3D.");
   // clang-format on
 
   // Parse and return the options
@@ -47,10 +49,11 @@ po::variables_map handle_args(int argc, const char* argv[]) {
 
 int main(int argc, const char* argv[]) {
   auto args = handle_args(argc, argv);
-  int num_partitions = args["num_partitions"].as<int>();
+  const int num_partitions = args["num_partitions"].as<int>();
+  const bool is3d = args["is3d"].as<bool>();
 
   // Read the g2o File
-  gtsam::GraphAndValues readGraph = gtsam::readG2o(args["input_g2o"].as<std::string>(), true);
+  gtsam::GraphAndValues readGraph = gtsam::readG2o(args["input_g2o"].as<std::string>(), is3d);
   gtsam::NonlinearFactorGraph graph = *(readGraph.first);
   gtsam::Values initial = *(readGraph.second);
 
@@ -86,11 +89,17 @@ int main(int argc, const char* argv[]) {
     rekeyed_initial.insert(new_key, kvp.value);
   }
 
-  // Add a prior since g2o doesn't include one 
-  rekeyed_graph.emplace_shared<gtsam::PriorFactor<gtsam::Pose3>>(
-      variable_remapping[0], rekeyed_initial.at<gtsam::Pose3>(variable_remapping[0]),
-      gtsam::noiseModel::Diagonal::Sigmas((gtsam::Vector(6) << 0.5, 0.5, 0.5, 1, 1, 1).finished()));
-
+  // Add a prior since g2o doesn't include one
+  if (is3d) {
+    rekeyed_graph.emplace_shared<gtsam::PriorFactor<gtsam::Pose3>>(
+        variable_remapping[0], rekeyed_initial.at<gtsam::Pose3>(variable_remapping[0]),
+        gtsam::noiseModel::Diagonal::Sigmas((gtsam::Vector(6) << 0.5, 0.5, 0.5, 1, 1, 1).finished()));
+  } else {
+    rekeyed_graph.emplace_shared<gtsam::PriorFactor<gtsam::Pose2>>(
+        variable_remapping[0], rekeyed_initial.at<gtsam::Pose2>(variable_remapping[0]),
+        // x, y, theta
+        gtsam::noiseModel::Diagonal::Sigmas((gtsam::Vector(3) << 0.5, 0.5, 1).finished()));
+  }
 
   // Solve the G2O file using GTSAM to get pseudo GT
   gtsam::LevenbergMarquardtParams params;
@@ -141,14 +150,22 @@ int main(int argc, const char* argv[]) {
         std::cout << "Adding Factor" << std::endl;
         // Add the factor to the robots graph
         robot_graph.push_back(factor);
-        robot_factor_types.push_back(keys.size() == 1 ? jrl::PriorFactorPose3Tag : jrl::BetweenFactorPose3Tag);
+        if (is3d) {
+          robot_factor_types.push_back(keys.size() == 1 ? jrl::PriorFactorPose3Tag : jrl::BetweenFactorPose3Tag);
+        } else {
+          robot_factor_types.push_back(keys.size() == 1 ? jrl::PriorFactorPose2Tag : jrl::BetweenFactorPose2Tag);
+        }
 
         // Add the initial and gt variables to for the robot
         for (auto key : keys) {
           if (!robot_initial.exists(key)) {
             robot_initial.insert(key, rekeyed_initial.at(key));
             robot_pseudo_gt.insert(key, rekeyed_pseudo_gt.at(key));
-            robot_value_types[key] = jrl::Pose3Tag;
+            if (is3d) {
+              robot_value_types[key] = jrl::Pose3Tag;
+            } else {
+              robot_value_types[key] = jrl::Pose2Tag;
+            }
           }
         }
       }
