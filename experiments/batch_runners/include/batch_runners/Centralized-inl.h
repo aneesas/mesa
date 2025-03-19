@@ -33,7 +33,13 @@ BatchIterResults Centralized<POSE_TYPE>::init() {
 template <class POSE_TYPE>
 BatchIterResults Centralized<POSE_TYPE>::iterate() {
   // Solve
-  gtsam::LevenbergMarquardtOptimizer optimizer(joint_factor_graph_, joint_values_);
+  // Tighten default LM tolerances
+  gtsam::LevenbergMarquardtParams lm_params;
+  lm_params.relativeErrorTol = 1e-12;
+  lm_params.absoluteErrorTol = 1e-12;
+  lm_params.maxIterations = 1000;
+  lm_params.setVerbosityLM("SUMMARY");
+  gtsam::LevenbergMarquardtOptimizer optimizer(joint_factor_graph_, joint_values_, lm_params);
   auto joint_solution = optimizer.optimize();
 
   // Aggregate the results
