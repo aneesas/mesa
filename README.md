@@ -70,6 +70,7 @@ These install instructions were tested on Ubuntu 20.04 as of April, 2024.
     * `cmake .. -DGTSAM_DIR=/path/to/mesa_workspace/gtsam/build -DGTSAM_INCLUDE_DIR=/path/to/mesa_workspace/gtsam/gtsam`
     * `make`
 * [Optional for scripts] Install JRL python into the project's python environment
+    * `cmake .. -DJRL_BUILD_PYTHON=ON`
     * `make jrl-python-install`
 
 ### 4. MESA
