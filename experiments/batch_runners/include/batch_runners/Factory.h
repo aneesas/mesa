@@ -85,6 +85,7 @@ boost::shared_ptr<batch_runners::BatchRunner<POSE_TYPE>> nonlinear_factory(std::
     params.z_compute_method = MESAParams::ComputeZMethod::INTERPOLATE_SPLIT;
     params.weight_z_compute = false;
     params.dual_compute_target = MESAParams::DualComputeTarget::OTHER_ESTIMATE;
+    params.run_synchronized = true;  // TODO(aneesa) hard-coded!!
 
     return boost::make_shared<batch_runners::BatchMESARunner<POSE_TYPE, GeodesicMESA<POSE_TYPE>>>(
         "geodesic-mesa", dataset, output_dir, params);

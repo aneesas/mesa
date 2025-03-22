@@ -25,8 +25,11 @@ struct MESAParams {
   /// @brief The rate of increase for beta
   double beta_multiplier_increase{1.0};
 
-  /// @brief Flag indicating pseudo-syncing of beta update (update ever |R| steps)
+  /// @brief Flag indicating pseudo-syncing of beta update (update every |R| steps)
   bool psuedo_sync_beta{false};
+
+  /// @brief Flag indicating running synchronized C-ADMM instead of edge-based
+  bool run_synchronized{false};
 
   /// @brief Flag indicating to add weak priors to shared variables in indep solve. Used when inter-robot measurements
   /// are not full determined

@@ -386,6 +386,30 @@ RobotValues BatchMESA<POSE_TYPE, Z_TYPE, BIASED_PRIOR_TYPE, INV_BIASED_PRIOR_TYP
       updateSharedVariables(comm_edge);
     }
 
+  } else if (params_.run_synchronized) {
+    std::cout << "Run Step: all robots" << std::endl;
+    // Run the optimization (local information only) on all robots
+    for (auto& rid : robots_) {
+      updateRobotEstimateAndMarginals(rid);
+    }
+
+    // Update the shared variable estimates
+    for (auto comm_edge : communication_network_) {
+      updateSharedVariables(comm_edge);
+    }
+
+    // Update the dual variables
+    for (auto comm_edge : communication_network_) {
+      updateDualVariables(comm_edge);
+    }
+
+    // Update communication counts and update beta variables if necessary
+    for (auto comm_edge : communication_network_) {
+      bool should_update_beta = updateCountsSinceLastComm(comm_edge);
+      if (!params_.psuedo_sync_beta || should_update_beta) {
+        edge_beta_variables_[comm_edge] *= params_.beta_multiplier_increase;
+      }
+    }
   } else {
     // Get a random edge
     auto edge_iter = communication_network_.begin();
