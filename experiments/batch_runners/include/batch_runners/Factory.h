@@ -76,8 +76,10 @@ boost::shared_ptr<batch_runners::BatchRunner<POSE_TYPE>> nonlinear_factory(std::
   /*********************************************************************************************************************/
   else if (method_name == "geodesic-mesa") {
     MESAParams params;
-    params.beta_init = 1;
-    params.beta_multiplier_increase = 1.0;
+    params.beta_init = 2;  // beta_0
+    params.beta_multiplier_increase = 1.05; // alpha
+    std::cout << "beta_init = " << params.beta_init << ", alpha = "
+              << params.beta_multiplier_increase << std::endl;
     params.prior_shared_vars_on_indep_solve = true;
     params.shared_var_prior_sigmas = compute_prior_sigmas<POSE_TYPE>();
 
