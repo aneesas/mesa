@@ -25,7 +25,8 @@ po::variables_map handle_args(int argc, const char* argv[]) {
       ("name,n",              po::value<std::string>()->required(),   "(Required) The name of the dataset")
       ("output_jrl,o",        po::value<std::string>()->required(),   "(Required) The output jrl file.")
       ("num_partitions,p",    po::value<int>()->required(),           "(Required) The number of partitions to make.")
-      ("is3d",                po::bool_switch()->default_value(false),"(Optional) Flag specifying if the g2o file is 3D.");
+      ("is3d",                po::bool_switch(),                      "(Optional) Flag specifying if the g2o file is 3D.")
+      ("metis",               po::bool_switch(),                      "(Optional) Flag to use METIS partitioning on dataset.");
   // clang-format on
 
   // Parse and return the options
@@ -51,15 +52,38 @@ int main(int argc, const char* argv[]) {
   auto args = handle_args(argc, argv);
   const int num_partitions = args["num_partitions"].as<int>();
   const bool is3d = args["is3d"].as<bool>();
+  const bool use_metis = args["metis"].as<bool>();
 
   // Read the g2o File
   gtsam::GraphAndValues readGraph = gtsam::readG2o(args["input_g2o"].as<std::string>(), is3d);
   gtsam::NonlinearFactorGraph graph = *(readGraph.first);
   gtsam::Values initial = *(readGraph.second);
 
-  // Partition the given graph into subgraphs using metis
-  // Returns map from variable key -> subgraph index
-  std::map<int, int> variable_partition = metis(graph, num_partitions);
+  std::map<int, int> variable_partition;
+  if (use_metis) {
+    // Partition the given graph into subgraphs using metis
+    // Returns map from variable key -> subgraph index
+    variable_partition = metis(graph, num_partitions);
+  } else {
+    // Partition the given graph into subgraphs based on consecutive IDs
+    const int num_poses = initial.size();
+    const int num_poses_per_robot = static_cast<int>(num_poses / num_partitions);
+    for (int robot_id = 0; robot_id < num_partitions; robot_id++) {
+      const int first_idx = num_poses_per_robot * robot_id;
+      int last_idx = first_idx + num_poses_per_robot;
+      if (robot_id == num_partitions - 1) {
+        last_idx = num_poses;  // no stragglers
+      }
+      for (int i = first_idx; i < last_idx; i++) {
+        variable_partition.insert(std::pair{i, robot_id});
+      }
+    }
+  }
+  std::cout << "Variable partitioning (variable key -> subgraph index):" << std::endl;
+  for (const auto& it : variable_partition) {
+    std::cout << it.first << " -> " << it.second << std::endl;
+  }
+  std::cout << "=========" << std::endl;
 
   // Get a sorted list of the variables held by each robot
   std::map<char, std::vector<int>> robot_variables;
